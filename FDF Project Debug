@@ -1,0 +1,43 @@
+import re
+import html
+
+def read_fdf_file(file_path):
+    with open(file_path, 'r', encoding='latin-1') as f:
+        return f.read()
+
+# Processes each object in the FDF file
+def process_fdf_objects(content):
+    # Regex to find object blocks
+    obj_pattern = re.compile(r'(\d+ 0 obj)(.*?)(endobj)', re.DOTALL)
+    objects = obj_pattern.findall(content)
+
+    for obj_id, obj_content, _ in objects:
+        print(f"Object ID: {obj_id}")
+        
+        # Extract and clean the contents
+        contents_match = re.search(r'/Contents\((.*?)\)', obj_content, re.DOTALL)
+        if contents_match:
+            raw_contents = contents_match.group(1)
+            # Handle line breaks and decode HTML entities
+            cleaned_contents = html.unescape(raw_contents.replace("\\r", "\n").replace("\\n", "\n"))
+            cleaned_contents = re.sub(r'\\(.)', r'\1', cleaned_contents)  # Remove backslashes before characters
+            print(f"Cleaned Contents: {cleaned_contents}")
+        else:
+            print("No contents found.")
+
+        # Other fields extraction for completeness
+        nm_match = re.search(r'/NM\(([^)]+)\)', obj_content)
+        subj_match = re.search(r'/Subj\(([^)]+)\)', obj_content)
+        rect_match = re.search(r'/Rect\[(.*?)\]', obj_content)
+        irt_match = re.search(r'/IRT\(([^)]+)\)', obj_content)
+
+        if nm_match: print(f"NM: {nm_match.group(1)}")
+        if subj_match: print(f"Subj: {subj_match.group(1)}")
+        if rect_match: print(f"Rect: {rect_match.group(1)}")
+        if irt_match: print(f"IRT: {irt_match.group(1)}")
+        print("------")
+
+# Update the file path to your FDF file's actual location
+file_path = '/Users/jeremyfeagan/Desktop/test.fdf'
+fdf_content = read_fdf_file(file_path)
+process_fdf_objects(fdf_content)
